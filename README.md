@@ -154,12 +154,12 @@ amyloidbench/
 | Predictor | Type | Methodology | Status |
 |-----------|------|-------------|--------|
 | Aggrescan3D | Structure-based | AGGRESCAN scale + solvent accessibility | ✅ Implemented |
-| FoldAmyloid | Sequence | Expected contact density | 🔄 Phase 2 |
-| WALTZ | Sequence | Hexapeptide amyloidogenicity | 🔄 Phase 2 |
-| PASTA 2.0 | Threading | Pairwise energy + structural templates | 🔄 Phase 2 |
-| APPNN | ML | Neural network on sequence features | 🔄 Phase 2 |
-| AmylPred2 | Consensus | 11-predictor meta-method | 🔄 Phase 2 |
-| TAPASS | Sequence | Aggregation-prone motifs | 🔄 Phase 2 |
+| FoldAmyloid | Sequence | Expected packing density | ✅ Re-implemented |
+| WALTZ | Sequence | Hexapeptide PSSM | ✅ Web + local approx |
+| PASTA 2.0 | Threading | Pairwise energy + structural templates | ✅ Web + local approx |
+| APPNN | ML | Neural network on sequence features | 🔄 Phase 3 |
+| AmylPred2 | Consensus | 11-predictor meta-method | 🔄 Phase 3 |
+| TAPASS | Sequence | Aggregation-prone motifs | 🔄 Phase 3 |
 | PATH | Threading | Structural compatibility scoring | 📋 Planned |
 | AGGRESCAN | Sequence | Experimental aggregation scale | 📋 Planned |
 | Fallback | ML+Biophysical | Our contextual predictor | 🔄 Phase 3 |
@@ -201,7 +201,7 @@ print(f"AUC: {metrics['auc']:.3f} ± {metrics['auc_std']:.3f}")
 ## Development Roadmap
 
 - [x] **Phase 1**: Core foundation (sequence/structure handling, predictor interface)
-- [ ] **Phase 2**: Web scrapers and re-implementations (FoldAmyloid, WALTZ, PASTA2, AmylPred2)
+- [x] **Phase 2**: FoldAmyloid re-implementation + web predictor infrastructure
 - [ ] **Phase 3**: Fallback predictor with biophysical and contextual features
 - [ ] **Phase 4**: Consensus engine with multiple aggregation strategies
 - [ ] **Phase 5**: Structural classification (polymorph prediction)

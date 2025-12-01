@@ -18,16 +18,20 @@ datasets without web interface limitations.
 
 Available predictors:
     - Aggrescan3DPredictor: Structure-based aggregation prediction
-    
-Planned predictors (to be implemented):
-    - FoldAmyloidPredictor: Contact density-based prediction
-    - AggrescanSeqPredictor: Original sequence-based AGGRESCAN
-    - FallbackPredictor: Our biophysical/contextual predictor
+    - FoldAmyloidPredictor: Contact density-based prediction (re-implemented)
 """
 
 from .aggrescan3d import Aggrescan3DPredictor, predict_with_a3d
+from .reimplemented import (
+    FoldAmyloidPredictor,
+    predict_with_foldamyloid,
+    get_packing_density_profile,
+)
 
 __all__ = [
     "Aggrescan3DPredictor",
     "predict_with_a3d",
+    "FoldAmyloidPredictor", 
+    "predict_with_foldamyloid",
+    "get_packing_density_profile",
 ]

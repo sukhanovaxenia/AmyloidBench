@@ -31,21 +31,49 @@ lack standalone implementations. Web automation provides access to these
 established methods until proper re-implementations can be validated.
 
 Available predictors:
-    (To be implemented in Phase 2)
-    - WaltzPredictor: Hexapeptide amyloidogenicity
-    - Pasta2Predictor: Pairwise energy + threading
-    - AmylPred2Predictor: Consensus of 11 predictors
-    - TapassPredictor: Aggregation-prone motifs
-    - FoldAmyloidWebPredictor: Contact density prediction
+    - WaltzPredictor: Hexapeptide position-specific scoring (Maurer-Stroh et al., 2010)
+    - Pasta2Predictor: Pairwise energy + threading (Walsh et al., 2014)
+    
+Local approximations available when servers unavailable:
+    - predict_waltz_local: Simplified WALTZ-like PSSM scoring
+    - predict_pasta_local: Simplified pairwise energy calculation
 """
 
-# Web predictors will be implemented in Phase 2
-# from .waltz import WaltzPredictor
-# from .pasta2 import Pasta2Predictor
-# from .amylpred2 import AmylPred2Predictor
+from .base import (
+    WebPredictorBase,
+    WebPredictorConfig,
+    parse_score_table,
+    parse_highlighted_regions,
+    extract_job_id,
+    PLAYWRIGHT_AVAILABLE,
+)
+
+# Always export local approximations (no dependencies required)
+from .waltz import predict_waltz_local, calculate_waltz_like_score
+from .pasta2 import predict_pasta_local, calculate_pasta_like_energy
 
 __all__ = [
-    # "WaltzPredictor",
-    # "Pasta2Predictor",
-    # "AmylPred2Predictor",
+    # Base classes
+    "WebPredictorBase",
+    "WebPredictorConfig",
+    # Utility functions
+    "parse_score_table",
+    "parse_highlighted_regions",
+    "extract_job_id",
+    "PLAYWRIGHT_AVAILABLE",
+    # Local approximations
+    "predict_waltz_local",
+    "calculate_waltz_like_score",
+    "predict_pasta_local",
+    "calculate_pasta_like_energy",
 ]
+
+# Import web predictors only if Playwright is available
+if PLAYWRIGHT_AVAILABLE:
+    from .waltz import WaltzPredictor
+    from .pasta2 import Pasta2Predictor
+    
+    __all__ += [
+        "WaltzPredictor",
+        "Pasta2Predictor",
+    ]

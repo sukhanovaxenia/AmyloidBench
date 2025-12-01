@@ -36,8 +36,18 @@ References:
     Fernandez-Escamilla et al. (2004) Nat Biotechnol 22:1302-1306
 """
 
-# Re-implementations will be added in Phase 2
-# from .foldamyloid import FoldAmyloidPredictor
-# from .aggrescan_seq import AggrescanSeqPredictor
+from .foldamyloid import (
+    FoldAmyloidPredictor,
+    predict_with_foldamyloid,
+    get_packing_density_profile,
+    PACKING_DENSITY,
+    EXPECTED_CONTACTS,
+)
 
-__all__ = []
+__all__ = [
+    "FoldAmyloidPredictor",
+    "predict_with_foldamyloid",
+    "get_packing_density_profile",
+    "PACKING_DENSITY",
+    "EXPECTED_CONTACTS",
+]
