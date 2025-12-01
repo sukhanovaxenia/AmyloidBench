@@ -11,42 +11,64 @@ physiological or pathological conditions. This integrates:
 - Consideration of APR length, intensity, and position
 - Contextual factors (gatekeeper density, disorder propensity)
 
-A protein may contain APRs yet remain soluble due to:
-1. APRs buried in the native fold
-2. Effective gatekeeper protection
-3. Stable native state kinetically trapping the protein
-4. Chaperone availability in cellular context
-
 **Structural classification: Amyloid polymorphs**
 
-Amyloid fibrils exhibit remarkable structural diversity:
+Amyloid fibrils exhibit remarkable structural diversity. The polymorph
+module provides prediction of:
 
-*Cross-β parallel in-register* - The canonical amyloid architecture
-where β-strands stack perpendicular to the fibril axis with parallel
-orientation. Characteristic of most disease-associated amyloids (Aβ,
-α-synuclein, tau). Features steric zipper interfaces.
+*Steric Zipper Classes (Eisenberg 8-class system)*
+Based on symmetry of the cross-β interface: strand orientation,
+sheet packing, and face orientation.
 
-*Cross-β antiparallel* - β-strands in antiparallel arrangement, found
-in some functional amyloids and designed amyloid-forming peptides.
+*Cross-β Geometry*
+Parallel in-register, parallel out-of-register, antiparallel, or mixed.
 
-*β-solenoid/β-helix* - Helical β-structure with triangular or quadrilateral
-cross-section. Found in HET-s prion domain, curli subunits, and some
-bacterial functional amyloids.
+*Higher-Order Folds*
+Steric zipper, β-solenoid, β-arcade, Greek key, β-helix, serpentine.
 
-*Cross-α* - Emerging class of amyloid-like fibrils formed by α-helical
-stacking. PSMα3 from Staphylococcus aureus exemplifies this category.
+The biological significance of polymorph classification includes:
+- Prion strain typing (different PrP^Sc conformers)
+- Synucleinopathy distinction (PD vs MSA α-synuclein polymorphs)
+- Tauopathy classification (AD vs Pick's tau polymorphs)
+- Functional amyloid identification (HET-s, curli)
 
-Structural classification requires:
-1. Integration of structure prediction (ESMFold, AlphaFold)
-2. Secondary structure content analysis
-3. Pattern recognition for repeat architectures
-4. Potentially ML models trained on solved amyloid structures
-
-Submodules:
-    binary: Protein-level amyloid/non-amyloid classification
-    polymorph: Structural type prediction (cross-β, β-solenoid, cross-α)
-    structural_pred: Interface to structure prediction tools
+References:
+    Sawaya et al. (2007) - Steric zipper classification
+    Eisenberg & Sawaya (2017) - Amyloid Atlas
+    Fitzpatrick et al. (2017) - Tau polymorphs
+    Schweighauser et al. (2020) - α-synuclein polymorphs
 """
 
-# Classification module will be implemented in Phase 5
-__all__ = []
+from .polymorph import (
+    # Enums
+    StericZipperClass,
+    CrossBetaGeometry,
+    AmyloidFold,
+    # Data classes
+    PolymorphPrediction,
+    # Main classifier
+    PolymorphClassifier,
+    # Convenience functions
+    predict_polymorph,
+    find_similar_structures,
+    get_known_structures,
+    # Database
+    KNOWN_AMYLOID_STRUCTURES,
+)
+
+__all__ = [
+    # Enums
+    "StericZipperClass",
+    "CrossBetaGeometry", 
+    "AmyloidFold",
+    # Data classes
+    "PolymorphPrediction",
+    # Main classifier
+    "PolymorphClassifier",
+    # Convenience functions
+    "predict_polymorph",
+    "find_similar_structures",
+    "get_known_structures",
+    # Database
+    "KNOWN_AMYLOID_STRUCTURES",
+]

@@ -26,9 +26,210 @@ The sequence determinants of amyloidogenicity include:
 
 - **Consensus prediction**: Meta-scoring from 11+ established tools
 - **Per-residue profiles**: Detailed aggregation propensity across sequences
+- **Polymorph classification**: Steric zipper classes, cross-β geometry, fold type
 - **Structural classification**: Cross-β parallel/antiparallel, β-solenoid, cross-α polymorphs
 - **Rigorous benchmarking**: Validated against WALTZ-DB, Cross-Beta DB, AmyPro
 - **Extensible architecture**: Easy integration of new predictors
+
+## Polymorph Classification
+
+AmyloidBench predicts the structural class of amyloidogenic sequences:
+
+```python
+from amyloidbench.classification import predict_polymorph
+
+# Aβ42 peptide
+result = predict_polymorph("DAEFRHDSGYEVHHQKLVFFAEDVGSNKGAIIGLMVGGVVIA")
+
+print(f"Fold type: {result.predicted_fold.value}")           # steric_zipper, beta_arcade, etc.
+print(f"Geometry: {result.predicted_geometry.value}")        # parallel_in_register, antiparallel
+print(f"Steric zipper: {result.steric_zipper_class.value}")  # class_1 through class_8
+print(f"Confidence: {result.confidence:.0%}")
+```
+
+Supported classifications:
+
+| Classification | Classes | Basis |
+|----------------|---------|-------|
+| **Steric Zipper** | 8 classes | Strand/sheet orientation, face packing (Eisenberg system) |
+| **Cross-β Geometry** | Parallel in-register, antiparallel, out-of-register | Strand arrangement |
+| **Fold Type** | Steric zipper, β-arcade, β-solenoid, Greek key | Higher-order topology |
+
+## Benchmarking Framework
+
+AmyloidBench includes comprehensive benchmarking against experimental databases:
+
+```python
+from amyloidbench.benchmark import BenchmarkRunner, load_benchmark_dataset
+
+# Load synthetic or experimental datasets
+dataset = load_benchmark_dataset("synthetic")  # Built-in test data
+# dataset = load_benchmark_dataset("waltz", path="waltz_data.csv")  # Real data
+
+# Create benchmark runner
+runner = BenchmarkRunner()
+runner.add_predictor("Aggrescan3D")
+runner.add_predictor("FoldAmyloid")
+runner.add_predictor("FallbackPredictor")
+
+# Run evaluation
+results = runner.run(dataset)
+
+# Generate comparison report
+report = runner.generate_report(results)
+print(report.summary())
+```
+
+### Supported Databases
+
+| Database | Description | Data Type |
+|----------|-------------|-----------|
+| **WALTZ-DB** | Hexapeptide aggregation (ThT, EM validated) | Binary labels |
+| **Cross-Beta DB** | Structural amyloid atlas (cryo-EM, X-ray) | APR regions |
+| **AmyPro** | Amyloid-forming proteins | Full-length sequences |
+| **Reference** | Curated gold-standard sequences | APR + polymorph |
+| **Synthetic** | Built-in canonical sequences | Testing/development |
+
+### Evaluation Metrics
+
+- **Binary**: Sensitivity, Specificity, Precision, F1, MCC, AUC-ROC
+- **Per-residue**: SOV score, Jaccard index, boundary accuracy
+- **Statistical**: Bootstrap confidence intervals, optimal threshold
+
+### Reference Datasets
+
+AmyloidBench includes curated gold-standard sequences for rigorous benchmarking:
+
+```python
+from amyloidbench.benchmark import (
+    create_comprehensive_dataset,
+    create_canonical_peptide_dataset,
+    get_canonical_peptides,
+    get_sequence_by_name,
+)
+
+# Full reference dataset (canonical + disease + functional + negative)
+dataset = create_comprehensive_dataset()
+print(f"Total: {len(dataset)} sequences ({dataset.n_positive} positive, {dataset.n_negative} negative)")
+
+# Access canonical peptides with full annotations
+peptides = get_canonical_peptides()
+for p in peptides[:3]:
+    print(f"{p.name}: {p.sequence} (Class {p.zipper_class}, PDB: {p.pdb_ids})")
+
+# Quick sequence lookup
+gnnqqny = get_sequence_by_name("GNNQQNY")  # Returns "GNNQQNY"
+```
+
+**Reference Dataset Categories:**
+- **Canonical Peptides** (12 sequences): GNNQQNY, KLVFFA, VQIVYK, NFGAIL with PDB structures
+- **Disease Proteins** (6 sequences): Aβ42, α-synuclein, tau, huntingtin with mapped APRs
+- **Functional Amyloids** (4 sequences): Curli, HET-s, Pmel17 with fold annotations
+- **Negative Controls** (5 sequences): Ubiquitin, lysozyme, GFP as non-amyloid examples
+
+### Statistical Comparison
+
+Rigorous statistical tests for predictor comparison:
+
+```python
+from amyloidbench.benchmark import (
+    compare_benchmark_results,
+    mcnemar_test,
+    wilcoxon_signed_rank_test,
+    friedman_test,
+    correct_pvalues,
+)
+
+# Compare multiple predictors
+comparison = compare_benchmark_results(results, metric="mcc")
+print(comparison.summary())
+
+# Pairwise McNemar test (paired classification comparison)
+errors_a = [pred != true for pred, true in zip(preds_a, labels)]
+errors_b = [pred != true for pred, true in zip(preds_b, labels)]
+result = mcnemar_test(errors_a, errors_b)
+print(f"McNemar p-value: {result.p_value:.4f}")
+
+# Multiple testing correction
+p_values = [0.01, 0.04, 0.06, 0.10]
+corrected, alpha_corrected = correct_pvalues(p_values, method="holm")
+```
+
+**Available Statistical Tests:**
+- **McNemar's Test**: Paired classification comparison
+- **Wilcoxon Signed-Rank**: Paired score comparison (non-parametric)
+- **DeLong Test**: AUC-ROC comparison on same dataset
+- **Friedman Test**: Multiple classifier comparison with Nemenyi post-hoc
+- **Correction Methods**: Bonferroni, Holm-Bonferroni, Benjamini-Hochberg FDR
+
+### Polymorph-Aware Benchmarking
+
+Evaluate predictor performance stratified by structural polymorph type:
+
+```python
+from amyloidbench.benchmark import (
+    quick_polymorph_benchmark,
+    annotate_dataset_with_polymorphs,
+    analyze_regions_with_polymorphs,
+)
+
+# Quick polymorph-stratified benchmark
+result = quick_polymorph_benchmark(predictor, dataset)
+print(result.summary())
+
+# Per-fold performance analysis
+for fold_name, metrics in result.per_fold_metrics.items():
+    print(f"{fold_name}: Sens={metrics.sensitivity:.3f}, MCC={metrics.mcc:.3f}")
+
+# Analyze APR regions with polymorph context
+regions = predictor.predict(sequence).aggregation_prone_regions
+analyses = analyze_regions_with_polymorphs(sequence, regions)
+for analysis in analyses:
+    print(f"Region {analysis.region.start}-{analysis.region.end}: "
+          f"{analysis.predicted_fold.value} ({analysis.confidence:.0%})")
+```
+
+## Visualization and Reporting
+
+AmyloidBench generates publication-quality figures and interactive HTML reports:
+
+```python
+from amyloidbench.visualization import (
+    plot_score_profile,
+    plot_multi_predictor_profile,
+    generate_sequence_report,
+)
+
+# Plot per-residue scores
+fig = plot_score_profile(
+    result.per_residue_scores.scores,
+    sequence=protein.sequence,
+    threshold=0.5,
+    predictor_name="Aggrescan3D"
+)
+fig.savefig("score_profile.png", dpi=300)
+
+# Generate comprehensive HTML report
+html = generate_sequence_report(
+    sequence=protein.sequence,
+    sequence_id=protein.id,
+    prediction_results={"Aggrescan3D": result},
+    consensus_result=consensus_data,
+    polymorph_result=polymorph_data
+)
+```
+
+### Visualization Types
+
+| Type | Function | Description |
+|------|----------|-------------|
+| **Score Profile** | `plot_score_profile()` | Per-residue scores with APR highlighting |
+| **Multi-Predictor** | `plot_multi_predictor_profile()` | Overlay comparison of predictors |
+| **Agreement Heatmap** | `plot_agreement_heatmap()` | Pairwise predictor correlation |
+| **Benchmark Comparison** | `plot_benchmark_comparison()` | Performance metric bar charts |
+| **Polymorph Distribution** | `plot_polymorph_probabilities()` | Fold type probability bars |
+| **Region Diagram** | `plot_region_diagram()` | APR region schematic |
+| **HTML Report** | `generate_sequence_report()` | Self-contained analysis report |
 
 ## Installation
 
@@ -155,14 +356,12 @@ amyloidbench/
 |-----------|------|-------------|--------|
 | Aggrescan3D | Structure-based | AGGRESCAN scale + solvent accessibility | ✅ Implemented |
 | FoldAmyloid | Sequence | Expected packing density | ✅ Re-implemented |
+| FallbackPredictor | Biophysics+ML | Hydrophobicity, β-propensity, gatekeepers | ✅ Implemented |
 | WALTZ | Sequence | Hexapeptide PSSM | ✅ Web + local approx |
 | PASTA 2.0 | Threading | Pairwise energy + structural templates | ✅ Web + local approx |
-| APPNN | ML | Neural network on sequence features | 🔄 Phase 3 |
-| AmylPred2 | Consensus | 11-predictor meta-method | 🔄 Phase 3 |
-| TAPASS | Sequence | Aggregation-prone motifs | 🔄 Phase 3 |
-| PATH | Threading | Structural compatibility scoring | 📋 Planned |
-| AGGRESCAN | Sequence | Experimental aggregation scale | 📋 Planned |
-| Fallback | ML+Biophysical | Our contextual predictor | 🔄 Phase 3 |
+| APPNN | ML | Neural network on sequence features | 📋 Planned |
+| AmylPred2 | Consensus | 11-predictor meta-method | 📋 Planned |
+| TAPASS | Sequence | Aggregation-prone motifs | 📋 Planned |
 
 ## Consensus Methods
 
@@ -202,10 +401,10 @@ print(f"AUC: {metrics['auc']:.3f} ± {metrics['auc_std']:.3f}")
 
 - [x] **Phase 1**: Core foundation (sequence/structure handling, predictor interface)
 - [x] **Phase 2**: FoldAmyloid re-implementation + web predictor infrastructure
-- [ ] **Phase 3**: Fallback predictor with biophysical and contextual features
-- [ ] **Phase 4**: Consensus engine with multiple aggregation strategies
-- [ ] **Phase 5**: Structural classification (polymorph prediction)
-- [ ] **Phase 6**: Benchmarking framework and visualization
+- [x] **Phase 3**: Feature extraction, Fallback predictor, Consensus engine
+- [x] **Phase 4**: Structural classification (polymorph prediction)
+- [x] **Phase 5**: Benchmarking framework (datasets, metrics, runner)
+- [x] **Phase 6**: Visualization and reporting
 
 ## Scientific Validation
 

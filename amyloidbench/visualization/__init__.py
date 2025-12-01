@@ -1,58 +1,128 @@
 """
 Visualization tools for amyloidogenicity prediction analysis.
 
-Effective visualization is crucial for interpreting prediction results
-and communicating findings. This module provides publication-ready plots
-for various aspects of amyloidogenicity analysis.
+This module provides publication-ready visualizations for prediction
+results, benchmark evaluations, and comprehensive HTML reports.
 
-**Per-residue score profiles**
+Visualization Types
+-------------------
 
-The primary visualization shows prediction scores along the protein
-sequence, highlighting regions exceeding the amyloidogenicity threshold.
-Key design features:
-- Multiple predictors on same axis for direct comparison
-- Threshold line clearly marked
-- Known APRs annotated if available (for validation)
-- Secondary structure track when available
-- Domain annotations from UniProt
+**Score Profiles**
+Per-residue amyloidogenicity scores along sequences with:
+- APR highlighting and threshold lines
+- Multi-predictor overlays for comparison
+- Known region annotations
 
-**Multi-predictor comparison**
+**Agreement Heatmaps**
+Pairwise predictor agreement matrices showing:
+- Methodological consistency
+- Algorithmic complementarity
 
-Heatmaps showing agreement/disagreement between predictors:
-- Rows: residue positions
-- Columns: predictors
-- Color: score intensity or binary prediction
-- Consensus track highlighting regions with high agreement
+**Benchmark Comparisons**
+Performance metric visualizations including:
+- Bar charts for metric comparison
+- Progress bars for rankings
 
-**Benchmark result visualization**
+**Polymorph Distributions**
+Probability distributions over structural classifications:
+- Fold type probabilities
+- Cross-β geometry predictions
 
-For performance evaluation:
-- ROC curves with confidence bands
-- Precision-recall curves
-- Metric comparison bar charts with error bars
-- Score distribution histograms for positive/negative classes
+**HTML Reports**
+Self-contained reports with:
+- Embedded figures
+- Interactive collapsible sections
+- Sequence highlighting
+- Publication-ready formatting
 
-**Structural visualization**
+Quick Start
+-----------
+    >>> from amyloidbench.visualization import plot_score_profile, generate_sequence_report
+    >>> 
+    >>> # Plot prediction scores
+    >>> fig = plot_score_profile(
+    ...     scores=result.per_residue_scores.scores,
+    ...     threshold=0.5,
+    ...     predictor_name="Aggrescan3D"
+    ... )
+    >>> fig.savefig("score_profile.png", dpi=300)
+    >>> 
+    >>> # Generate HTML report
+    >>> html = generate_sequence_report(
+    ...     sequence=protein.sequence,
+    ...     sequence_id=protein.id,
+    ...     prediction_results={"Aggrescan3D": result}
+    ... )
 
-When 3D structure is available:
-- Surface coloring by aggregation propensity
-- APR highlighting in PyMOL-ready format
-- Integration with py3Dmol for interactive web views
-
-**Design principles**
-
-1. *Clarity*: Unambiguous representation of biological meaning
-2. *Accessibility*: Colorblind-friendly palettes (viridis default)
-3. *Reproducibility*: All plots generated with specified seeds
-4. *Flexibility*: Customizable for publication requirements
-5. *Interactivity*: Optional Plotly versions for exploration
-
-Submodules:
-    profiles: Per-residue score visualization
-    heatmaps: Multi-predictor comparison matrices
-    roc: Performance evaluation curves
-    structure: 3D structure coloring and rendering
+Design Principles
+-----------------
+1. Colorblind-friendly palettes (viridis-based)
+2. Publication-ready defaults (300 DPI)
+3. Minimal external dependencies
+4. Consistent styling across plot types
 """
 
-# Visualization module will be implemented in Phase 6
-__all__ = []
+from .plots import (
+    # Availability check
+    HAS_MATPLOTLIB,
+    # Styling
+    PlotStyle,
+    CATEGORICAL_COLORS,
+    # Score profiles
+    plot_score_profile,
+    plot_multi_predictor_profile,
+    # Agreement and comparison
+    plot_agreement_heatmap,
+    plot_benchmark_comparison,
+    # Polymorph classification
+    plot_polymorph_probabilities,
+    # Region diagrams
+    plot_region_diagram,
+    # Summary figures
+    create_summary_figure,
+    # Utilities
+    save_figure,
+    figure_to_base64,
+)
+
+from .reports import (
+    # Configuration
+    ReportConfig,
+    # Generators
+    SequenceReportGenerator,
+    BenchmarkReportGenerator,
+    # Convenience functions
+    generate_sequence_report,
+    generate_benchmark_report,
+)
+
+__all__ = [
+    # Availability
+    "HAS_MATPLOTLIB",
+    # Styling
+    "PlotStyle",
+    "CATEGORICAL_COLORS",
+    # Score profiles
+    "plot_score_profile",
+    "plot_multi_predictor_profile",
+    # Comparisons
+    "plot_agreement_heatmap",
+    "plot_benchmark_comparison",
+    # Polymorph
+    "plot_polymorph_probabilities",
+    # Regions
+    "plot_region_diagram",
+    # Summary
+    "create_summary_figure",
+    # Utilities
+    "save_figure",
+    "figure_to_base64",
+    # Report configuration
+    "ReportConfig",
+    # Report generators
+    "SequenceReportGenerator",
+    "BenchmarkReportGenerator",
+    # Report functions
+    "generate_sequence_report",
+    "generate_benchmark_report",
+]

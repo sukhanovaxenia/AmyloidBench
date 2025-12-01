@@ -1,49 +1,47 @@
 """
-Feature extraction for machine learning-based amyloidogenicity prediction.
+Feature extraction for amyloidogenicity prediction.
 
-This module provides systematic extraction of sequence and structure-derived
-features relevant to amyloid formation. The feature space is grounded in
-the biophysical and biochemical principles underlying protein aggregation:
+This module provides comprehensive extraction of biophysical and
+contextual features from protein sequences. Features are designed
+to capture the determinants of amyloid formation:
 
-**Compositional features**
-Amino acid frequencies, dipeptide composition, and grouped amino acid
-classes. These capture the overall chemical character of sequences—
-amyloidogenic regions are enriched in hydrophobic, β-sheet-prone residues
-(V, I, L, F, Y) and depleted in aggregation-inhibiting "gatekeepers"
-(P, K, R, E, D).
+- Hydrophobicity patterns (driving force for aggregation)
+- Secondary structure propensity (β-sheet formation capability)
+- Charge distribution (gatekeeper effects, electrostatic repulsion)
+- Sequence composition (amino acid classes, dipeptides)
+- Structural motifs (hydrophobic stretches, repeats, low complexity)
 
-**Biophysical features**
-Hydrophobicity profiles (Kyte-Doolittle, Eisenberg consensus), charge
-patterns, and structural propensity scales (Chou-Fasman α/β). These
-directly relate to the thermodynamic driving forces of aggregation.
-
-**Structural features**
-Secondary structure predictions, intrinsic disorder propensity, and
-when available, solvent accessibility. These determine which regions
-are structurally predisposed to β-sheet formation and whether they
-are exposed for intermolecular contacts.
-
-**Contextual features**
-Flanking sequence analysis—gatekeeper residues adjacent to hydrophobic
-stretches act as evolutionary safeguards against aberrant aggregation.
-Position within the protein (N/C-terminal bias) also influences
-aggregation kinetics.
-
-**Evolutionary features**
-Conservation scores from multiple sequence alignments. Aggregation-prone
-regions in functional amyloids show conservation, while pathological
-APRs often involve mutation-induced disruption of protective features.
-
-Feature extraction follows a sliding window approach for per-residue
-predictions, with window sizes optimized for each feature type (typically
-5-21 residues for local properties, whole-protein for global features).
-
-Submodules:
-    biophysical: Hydrophobicity, charge, propensity scales
-    structural: Secondary structure, disorder prediction
-    evolutionary: Conservation and position-specific scoring
-    context: Flanking region and gatekeeper analysis
+The features can be used for:
+1. Direct scoring of aggregation propensity
+2. Input to machine learning models
+3. Interpretable analysis of amyloidogenic sequences
 """
 
-# Features module will be implemented in Phase 3
-__all__ = []
+from .extraction import (
+    FeatureExtractor,
+    SequenceFeatures,
+    extract_features,
+    get_feature_names,
+    calculate_aggregation_score,
+    # Amino acid scales
+    HYDROPHOBICITY_KD,
+    HYDROPHOBICITY_EISENBERG,
+    BETA_PROPENSITY_CF,
+    ALPHA_PROPENSITY_CF,
+    AGGREGATION_PROPENSITY,
+    CHARGE_PH7,
+)
+
+__all__ = [
+    "FeatureExtractor",
+    "SequenceFeatures",
+    "extract_features",
+    "get_feature_names",
+    "calculate_aggregation_score",
+    "HYDROPHOBICITY_KD",
+    "HYDROPHOBICITY_EISENBERG",
+    "BETA_PROPENSITY_CF",
+    "ALPHA_PROPENSITY_CF",
+    "AGGREGATION_PROPENSITY",
+    "CHARGE_PH7",
+]

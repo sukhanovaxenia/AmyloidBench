@@ -1,63 +1,261 @@
 """
 Benchmarking framework for amyloidogenicity predictor evaluation.
 
-Rigorous benchmarking against experimentally-validated datasets is essential
-for establishing predictor reliability and comparing methodologies. This
-module provides:
+This module provides comprehensive benchmarking against experimentally-validated
+databases with rigorous metric calculation and comparison tools.
 
-**Curated database integration**
+Supported Databases
+-------------------
 
-*WALTZ-DB* (Louros et al., 2020)
+**WALTZ-DB** (Louros et al., 2020)
 Hexapeptide-resolution data on amyloid-forming and non-forming sequences.
-Contains experimentally validated positive examples from thioflavin T
-binding assays and negative examples verified as non-aggregating.
-Advantages: High-quality experimental validation, defined sequence length.
-Limitations: Hexapeptide context may not reflect full-length protein behavior.
+Contains experimentally validated examples from ThT binding assays.
 
-*Cross-Beta DB* (Gonay et al., 2024)
+**Cross-Beta DB** (Sawaya et al., 2021)
 Curated from PDB structures with confirmed cross-β amyloid architecture.
-Contains amyloidogenic regions from naturally-occurring amyloids (both
-functional and disease-associated) with experimentally determined structures.
-Advantages: Structure-validated, represents physiological amyloids.
-Limitations: Biased toward well-studied amyloids with solved structures.
+Contains structure-validated amyloidogenic regions.
 
-*AmyPro* (Varadi et al.)
-Database of amyloid-forming proteins with annotated regions from literature
-curation. Broader coverage than structure-based databases.
+**AmyPro** (Varadi et al., 2018)
+Database of amyloid-forming proteins with annotated regions.
 
-**Evaluation metrics**
+**Reference Datasets** (AmyloidBench curated)
+Gold-standard sequences including canonical peptides (GNNQQNY, KLVFFA, VQIVYK),
+disease proteins (Aβ42, α-synuclein, tau), functional amyloids (curli, HET-s),
+and negative controls (ubiquitin, lysozyme, GFP).
 
-For per-residue predictions:
-- Sensitivity (TPR): Fraction of APR residues correctly identified
-- Specificity (TNR): Fraction of non-APR residues correctly rejected
-- Precision (PPV): Fraction of predicted APR residues that are true APRs
-- F1 score: Harmonic mean of precision and sensitivity
-- Matthews Correlation Coefficient (MCC): Balanced measure for imbalanced data
+**Synthetic datasets**
+Built-in datasets for testing based on canonical amyloid sequences.
 
-For protein-level classification:
-- Area Under ROC Curve (AUC): Overall discriminative ability
-- Precision-Recall curve: Appropriate for imbalanced datasets
+Evaluation Metrics
+------------------
+- Sensitivity, Specificity, Precision, F1 score
+- Matthews Correlation Coefficient (MCC)
+- AUC-ROC, AUC-PR
+- Per-residue SOV score, Jaccard index
+- Bootstrap confidence intervals
 
-**Methodological considerations**
+Statistical Comparison
+----------------------
+- McNemar's test for paired classification comparison
+- Wilcoxon signed-rank test for paired scores
+- DeLong test for AUC-ROC comparison
+- Friedman test with Nemenyi post-hoc for multiple predictors
+- Multiple testing correction (Bonferroni, Holm, Benjamini-Hochberg)
 
-1. *Data leakage*: Many predictors were trained on subsets of benchmark
-   databases. We implement sequence-similarity filtering to identify
-   potential overlaps between training and test sets.
+Polymorph-Aware Benchmarking
+----------------------------
+- Per-fold performance (steric zipper, β-solenoid, β-arcade)
+- Per-geometry analysis (parallel, antiparallel)
+- Cross-polymorph generalization testing
 
-2. *Redundancy reduction*: CD-HIT clustering at various thresholds (30%,
-   50%, 90% identity) to assess performance on diverse vs. similar sequences.
-
-3. *Stratified cross-validation*: Maintain class proportions across folds
-   and ensure sequence families don't span train/test splits.
-
-4. *Statistical testing*: DeLong test for AUC comparison, bootstrap
-   confidence intervals for all metrics.
-
-Submodules:
-    datasets: Database loaders and parsers
-    metrics: Performance metric calculations
-    crossval: Cross-validation infrastructure
+Quick Start
+-----------
+    >>> from amyloidbench.benchmark import quick_benchmark, load_benchmark_dataset
+    >>> 
+    >>> # Quick benchmark with synthetic data
+    >>> results = quick_benchmark(dataset="synthetic")
+    >>> for r in results:
+    ...     print(f"{r.predictor_name}: MCC={r.classification_metrics.mcc:.3f}")
+    >>> 
+    >>> # Full benchmark with runner
+    >>> from amyloidbench.benchmark import BenchmarkRunner
+    >>> runner = BenchmarkRunner()
+    >>> runner.add_all_predictors()
+    >>> dataset = load_benchmark_dataset("synthetic")
+    >>> results = runner.run(dataset)
+    >>> report = runner.generate_report(results)
+    >>> print(report.summary())
+    
+    >>> # Statistical comparison
+    >>> from amyloidbench.benchmark import compare_benchmark_results
+    >>> comparison = compare_benchmark_results(results)
+    >>> print(comparison.summary())
+    
+    >>> # Reference dataset benchmarking
+    >>> from amyloidbench.benchmark import create_comprehensive_dataset
+    >>> ref_dataset = create_comprehensive_dataset()
+    >>> results = runner.run(ref_dataset)
 """
 
-# Benchmark module will be implemented in Phase 6
-__all__ = []
+from .datasets import (
+    # Enums
+    AmyloidStatus,
+    ExperimentalMethod,
+    # Data classes
+    BenchmarkEntry,
+    BenchmarkDataset,
+    # Loaders
+    WaltzDBLoader,
+    CrossBetaDBLoader,
+    AmyProLoader,
+    FASTALoader,
+    # Functions
+    load_benchmark_dataset,
+    get_available_datasets,
+)
+
+from .metrics import (
+    # Data classes
+    ConfusionMatrix,
+    ClassificationMetrics,
+    PerResidueMetrics,
+    BenchmarkResult,
+    # Calculation functions
+    calculate_classification_metrics,
+    calculate_per_residue_metrics,
+    calculate_mcc,
+    calculate_auc_roc,
+    calculate_auc_pr,
+    calculate_sov,
+    find_optimal_threshold,
+    bootstrap_confidence_interval,
+    # Comparison functions
+    compare_predictors,
+    rank_predictors,
+)
+
+from .runner import (
+    # Configuration
+    RunnerConfig,
+    # Main class
+    BenchmarkRunner,
+    BenchmarkReport,
+    # Convenience
+    quick_benchmark,
+)
+
+from .statistics import (
+    # Data classes
+    StatisticalComparison,
+    MultipleComparisonResult,
+    # Pairwise tests
+    mcnemar_test,
+    wilcoxon_signed_rank_test,
+    paired_t_test,
+    delong_test,
+    # Multiple comparison
+    friedman_test,
+    correct_pvalues,
+    # Convenience
+    compare_benchmark_results,
+    pairwise_compare_predictors,
+)
+
+from .reference_datasets import (
+    # Data classes
+    CanonicalPeptide,
+    DiseaseProtein,
+    FunctionalAmyloid,
+    NegativeControl,
+    # Dataset builders
+    create_canonical_peptide_dataset,
+    create_disease_protein_dataset,
+    create_functional_amyloid_dataset,
+    create_negative_control_dataset,
+    create_comprehensive_dataset,
+    # Access functions
+    get_canonical_peptides,
+    get_disease_proteins,
+    get_functional_amyloids,
+    get_negative_controls,
+    get_sequence_by_name,
+    # Raw data
+    CANONICAL_PEPTIDES,
+    DISEASE_PROTEINS,
+    FUNCTIONAL_AMYLOIDS,
+    NEGATIVE_CONTROLS,
+)
+
+from .polymorph_benchmark import (
+    # Data classes
+    PolymorphBenchmarkEntry,
+    PolymorphBenchmarkResult,
+    RegionPolymorphAnalysis,
+    # Functions
+    annotate_dataset_with_polymorphs,
+    analyze_regions_with_polymorphs,
+    test_cross_polymorph_generalization,
+    # Runner
+    PolymorphBenchmarkRunner,
+    # Convenience
+    quick_polymorph_benchmark,
+    get_polymorph_specific_performance,
+)
+
+__all__ = [
+    # Dataset enums
+    "AmyloidStatus",
+    "ExperimentalMethod",
+    # Dataset classes
+    "BenchmarkEntry",
+    "BenchmarkDataset",
+    # Dataset loaders
+    "WaltzDBLoader",
+    "CrossBetaDBLoader",
+    "AmyProLoader",
+    "FASTALoader",
+    # Dataset functions
+    "load_benchmark_dataset",
+    "get_available_datasets",
+    # Metric classes
+    "ConfusionMatrix",
+    "ClassificationMetrics",
+    "PerResidueMetrics",
+    "BenchmarkResult",
+    # Metric functions
+    "calculate_classification_metrics",
+    "calculate_per_residue_metrics",
+    "calculate_mcc",
+    "calculate_auc_roc",
+    "calculate_auc_pr",
+    "calculate_sov",
+    "find_optimal_threshold",
+    "bootstrap_confidence_interval",
+    "compare_predictors",
+    "rank_predictors",
+    # Runner
+    "RunnerConfig",
+    "BenchmarkRunner",
+    "BenchmarkReport",
+    "quick_benchmark",
+    # Statistical comparison
+    "StatisticalComparison",
+    "MultipleComparisonResult",
+    "mcnemar_test",
+    "wilcoxon_signed_rank_test",
+    "paired_t_test",
+    "delong_test",
+    "friedman_test",
+    "correct_pvalues",
+    "compare_benchmark_results",
+    "pairwise_compare_predictors",
+    # Reference datasets
+    "CanonicalPeptide",
+    "DiseaseProtein",
+    "FunctionalAmyloid",
+    "NegativeControl",
+    "create_canonical_peptide_dataset",
+    "create_disease_protein_dataset",
+    "create_functional_amyloid_dataset",
+    "create_negative_control_dataset",
+    "create_comprehensive_dataset",
+    "get_canonical_peptides",
+    "get_disease_proteins",
+    "get_functional_amyloids",
+    "get_negative_controls",
+    "get_sequence_by_name",
+    "CANONICAL_PEPTIDES",
+    "DISEASE_PROTEINS",
+    "FUNCTIONAL_AMYLOIDS",
+    "NEGATIVE_CONTROLS",
+    # Polymorph benchmarking
+    "PolymorphBenchmarkEntry",
+    "PolymorphBenchmarkResult",
+    "RegionPolymorphAnalysis",
+    "PolymorphBenchmarkRunner",
+    "annotate_dataset_with_polymorphs",
+    "analyze_regions_with_polymorphs",
+    "test_cross_polymorph_generalization",
+    "quick_polymorph_benchmark",
+    "get_polymorph_specific_performance",
+]

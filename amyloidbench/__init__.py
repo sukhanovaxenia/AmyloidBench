@@ -64,23 +64,31 @@ from .predictors.base import (
 
 # Import concrete predictors to register them
 from .predictors.local import aggrescan3d
+from .predictors.local.reimplemented import foldamyloid
+from .predictors.local import fallback
+
+# Import consensus engine
+from .consensus import ConsensusEngine, ConsensusMethod, quick_consensus
 
 
 def predict(
     protein: ProteinRecord,
     predictors: list[str] | None = None,
     consensus: bool = True,
+    method: str = "weighted_average",
 ) -> PredictionResult | ConsensusResult:
     """
     Run amyloidogenicity prediction on a protein.
     
     This is the main high-level interface for predictions. For more control,
-    use individual predictor classes directly.
+    use individual predictor classes or the ConsensusEngine directly.
     
     Args:
         protein: ProteinRecord with sequence (and optionally structure)
         predictors: List of predictor names to use (default: all available)
         consensus: If True and multiple predictors, return consensus result
+        method: Consensus method ('majority_vote', 'weighted_average', 
+                'intersection', 'union')
     
     Returns:
         PredictionResult if single predictor, ConsensusResult if consensus
@@ -102,38 +110,34 @@ def predict(
         pred = get_predictor(predictors[0])
         return pred.predict(protein)
     
-    # Multiple predictors
-    results = {}
+    # Multiple predictors - use consensus engine
+    if consensus:
+        # Map string method to enum
+        method_map = {
+            "majority_vote": ConsensusMethod.MAJORITY_VOTE,
+            "weighted_average": ConsensusMethod.WEIGHTED_AVERAGE,
+            "intersection": ConsensusMethod.INTERSECTION,
+            "union": ConsensusMethod.UNION,
+        }
+        consensus_method = method_map.get(method, ConsensusMethod.WEIGHTED_AVERAGE)
+        
+        return quick_consensus(protein, predictors, method=consensus_method)
+    
+    # No consensus - return first successful result
     for pred_name in predictors:
         if pred_name not in available:
             continue
-        pred = get_predictor(pred_name)
-        results[pred_name] = pred.predict(protein)
-    
-    if not consensus:
-        # Return first successful result
-        for result in results.values():
+        try:
+            pred = get_predictor(pred_name)
+            result = pred.predict(protein)
             if result.success:
                 return result
-        return list(results.values())[0]  # Return first even if failed
+        except Exception:
+            continue
     
-    # Build consensus result
-    # (Full consensus implementation in Phase 4)
-    from .core.models import ConsensusResult
-    
-    n_positive = sum(1 for r in results.values() if r.is_amyloidogenic)
-    n_negative = sum(1 for r in results.values() if r.is_amyloidogenic is False)
-    
-    return ConsensusResult(
-        sequence_id=protein.id,
-        sequence=protein.sequence,
-        individual_results=results,
-        consensus_is_amyloidogenic=n_positive > n_negative,
-        n_predictors_agree_positive=n_positive,
-        n_predictors_agree_negative=n_negative,
-        n_predictors_total=len(results),
-        consensus_method="majority_vote",
-    )
+    # All failed - return last attempt
+    pred = get_predictor(predictors[0])
+    return pred.predict(protein)
 
 
 __all__ = [
@@ -157,4 +161,8 @@ __all__ = [
     "PredictorType",
     "get_predictor",
     "list_predictors",
+    # Consensus
+    "ConsensusEngine",
+    "ConsensusMethod",
+    "quick_consensus",
 ]
