@@ -96,6 +96,30 @@ from .reports import (
     generate_benchmark_report,
 )
 
+from .statistical_plots import (
+    # Color schemes
+    SIGNIFICANCE_COLORS,
+    POLYMORPH_COLORS,
+    GEOMETRY_COLORS,
+    # Critical difference diagram
+    plot_critical_difference_diagram,
+    # P-value visualization
+    plot_pvalue_heatmap,
+    create_pvalue_matrix_from_comparisons,
+    # Effect sizes
+    plot_effect_sizes,
+    # Polymorph performance
+    plot_polymorph_radar,
+    plot_polymorph_bars,
+    # Reference dataset summary
+    plot_reference_dataset_summary,
+    # Phase 5 integration
+    visualize_multiple_comparison_result,
+    visualize_polymorph_benchmark_result,
+    # Quick plotting
+    quick_comparison_plot,
+)
+
 __all__ = [
     # Availability
     "HAS_MATPLOTLIB",
@@ -125,4 +149,22 @@ __all__ = [
     # Report functions
     "generate_sequence_report",
     "generate_benchmark_report",
+    # Statistical visualization colors
+    "SIGNIFICANCE_COLORS",
+    "POLYMORPH_COLORS",
+    "GEOMETRY_COLORS",
+    # Statistical comparison plots
+    "plot_critical_difference_diagram",
+    "plot_pvalue_heatmap",
+    "create_pvalue_matrix_from_comparisons",
+    "plot_effect_sizes",
+    # Polymorph performance plots
+    "plot_polymorph_radar",
+    "plot_polymorph_bars",
+    "plot_reference_dataset_summary",
+    # Phase 5 integration
+    "visualize_multiple_comparison_result",
+    "visualize_polymorph_benchmark_result",
+    # Quick plotting
+    "quick_comparison_plot",
 ]

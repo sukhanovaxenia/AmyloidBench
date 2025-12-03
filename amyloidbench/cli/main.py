@@ -390,8 +390,8 @@ def list_predictors_cmd(detailed: bool):
 @cli.command("benchmark")
 @click.option(
     "--database", "-d",
-    type=click.Choice(["waltz-db", "crossbeta-db", "amypro", "all"]),
-    default="all",
+    type=click.Choice(["waltz-db", "crossbeta-db", "amypro", "reference", "all"]),
+    default="reference",
     help="Benchmark database(s) to use"
 )
 @click.option(
@@ -411,8 +411,13 @@ def list_predictors_cmd(detailed: bool):
     default=5,
     help="Number of cross-validation folds"
 )
+@click.option(
+    "--statistical-test",
+    is_flag=True,
+    help="Run statistical comparison between predictors"
+)
 @click.pass_context
-def benchmark(ctx, database: str, predictor: tuple, output: str, cv_folds: int):
+def benchmark(ctx, database: str, predictor: tuple, output: str, cv_folds: int, statistical_test: bool):
     """
     Benchmark predictors against curated amyloid databases.
     
@@ -421,17 +426,322 @@ def benchmark(ctx, database: str, predictor: tuple, output: str, cv_folds: int):
     
     \b
     Examples:
-        amyloidbench benchmark --database waltz-db
-        amyloidbench benchmark -p Aggrescan3D -p FoldAmyloid --cv-folds 10
+        amyloidbench benchmark --database reference
+        amyloidbench benchmark -p Aggrescan3D -p FallbackPredictor --statistical-test
+        amyloidbench benchmark -d waltz-db --cv-folds 10
     """
-    console.print(
-        "\n[yellow]Benchmark functionality will be implemented in Phase 6.[/yellow]"
+    from pathlib import Path
+    from ..benchmark import (
+        BenchmarkRunner,
+        create_comprehensive_dataset,
+        create_canonical_peptide_dataset,
+        compare_benchmark_results,
     )
-    console.print("This will include:")
-    console.print("  • Database loaders for WALTZ-DB, Cross-Beta DB, AmyPro")
-    console.print("  • Stratified cross-validation")
-    console.print("  • Metrics: Sensitivity, Specificity, F1, MCC, AUC")
-    console.print("  • Statistical comparison between predictors")
+    from ..predictors.base import list_predictors, get_predictor, PredictorConfig
+    
+    output_dir = Path(output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Determine which predictors to use
+    available_info = list_predictors()
+    available = [p['name'] for p in available_info]
+    if predictor:
+        selected_predictors = [p for p in predictor if p in available]
+        missing = [p for p in predictor if p not in available]
+        if missing:
+            console.print(f"[yellow]Warning: Unknown predictors ignored: {missing}[/yellow]")
+    else:
+        selected_predictors = [p for p in available if p in ['Aggrescan3D', 'FoldAmyloid', 'FallbackPredictor']]
+    
+    if not selected_predictors:
+        console.print("[red]No valid predictors selected.[/red]")
+        return
+    
+    console.print(f"\n[bold]Benchmarking {len(selected_predictors)} predictor(s)[/bold]")
+    console.print(f"Predictors: {', '.join(selected_predictors)}")
+    
+    # Load dataset
+    console.print(f"\n[bold]Loading dataset: {database}[/bold]")
+    
+    if database == "reference":
+        dataset = create_comprehensive_dataset()
+        console.print(f"  Loaded {len(dataset)} sequences ({dataset.n_positive} positive, {dataset.n_negative} negative)")
+    elif database == "canonical":
+        dataset = create_canonical_peptide_dataset()
+        console.print(f"  Loaded {len(dataset)} canonical peptides")
+    else:
+        console.print(f"[yellow]  {database} dataset loading not yet implemented.[/yellow]")
+        console.print("  Using reference dataset as fallback.")
+        dataset = create_comprehensive_dataset()
+    
+    # Run benchmark
+    runner = BenchmarkRunner()
+    for pred_name in selected_predictors:
+        runner.add_predictor(pred_name)
+    
+    console.print("\n[bold]Running benchmark...[/bold]")
+    
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Evaluating predictors...", total=None)
+        results = runner.run(dataset)
+        progress.update(task, completed=True)
+    
+    # Display results
+    results_table = Table(
+        title=f"Benchmark Results ({database})",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    
+    results_table.add_column("Predictor", style="bold")
+    results_table.add_column("Sensitivity", justify="right")
+    results_table.add_column("Specificity", justify="right")
+    results_table.add_column("Precision", justify="right")
+    results_table.add_column("F1", justify="right")
+    results_table.add_column("MCC", justify="right")
+    
+    for result in results:
+        m = result.classification_metrics
+        results_table.add_row(
+            result.predictor_name,
+            f"{m.sensitivity:.3f}",
+            f"{m.specificity:.3f}",
+            f"{m.precision:.3f}" if m.precision else "-",
+            f"{m.f1_score:.3f}" if m.f1_score else "-",
+            f"{m.mcc:.3f}",
+        )
+    
+    console.print(results_table)
+    
+    # Statistical comparison
+    if statistical_test and len(results) >= 2:
+        console.print("\n[bold]Statistical Comparison[/bold]")
+        try:
+            comparison = compare_benchmark_results(results, metric="mcc")
+            console.print(f"Test: {comparison.test_name}")
+            console.print(f"p-value: {comparison.overall_p_value:.4f}")
+            
+            if hasattr(comparison, 'rankings') and comparison.rankings:
+                console.print("\nRankings:")
+                for name, rank in comparison.rankings:
+                    console.print(f"  {name}: {rank:.2f}")
+        except Exception as e:
+            console.print(f"[yellow]Statistical comparison failed: {e}[/yellow]")
+    
+    # Save results
+    results_file = output_dir / "benchmark_results.json"
+    results_data = {
+        "database": database,
+        "predictors": selected_predictors,
+        "results": [
+            {
+                "predictor": r.predictor_name,
+                "sensitivity": r.classification_metrics.sensitivity,
+                "specificity": r.classification_metrics.specificity,
+                "precision": r.classification_metrics.precision,
+                "f1_score": r.classification_metrics.f1_score,
+                "mcc": r.classification_metrics.mcc,
+            }
+            for r in results
+        ]
+    }
+    with open(results_file, "w") as f:
+        json.dump(results_data, f, indent=2)
+    
+    console.print(f"\n[green]✓[/green] Results saved to: {results_file}")
+
+
+@cli.command("reference-datasets")
+@click.option("--list", "list_datasets", is_flag=True, help="List available reference datasets")
+@click.option("--show", type=str, help="Show details of specific dataset (canonical/disease/functional/negative)")
+@click.option("--export", type=click.Path(), help="Export dataset to FASTA file")
+def reference_datasets_cmd(list_datasets: bool, show: str, export: str):
+    """
+    Browse and export curated reference datasets for benchmarking.
+    
+    Reference datasets include:
+    - canonical: 12 peptides with solved crystal structures
+    - disease: 6 disease-associated amyloid proteins  
+    - functional: 4 functional amyloid proteins
+    - negative: 5 non-amyloidogenic control proteins
+    
+    \b
+    Examples:
+        amyloidbench reference-datasets --list
+        amyloidbench reference-datasets --show canonical
+        amyloidbench reference-datasets --export reference.fasta
+    """
+    from ..benchmark import (
+        CANONICAL_PEPTIDES,
+        DISEASE_PROTEINS,
+        FUNCTIONAL_AMYLOIDS,
+        NEGATIVE_CONTROLS,
+        create_comprehensive_dataset,
+    )
+    
+    if list_datasets:
+        console.print("\n[bold]Available Reference Datasets[/bold]\n")
+        
+        datasets_info = [
+            ("canonical", len(CANONICAL_PEPTIDES), "Peptides with PDB structures", "GNNQQNY, KLVFFA, VQIVYK..."),
+            ("disease", len(DISEASE_PROTEINS), "Disease-associated proteins", "Aβ42, α-Synuclein, Tau..."),
+            ("functional", len(FUNCTIONAL_AMYLOIDS), "Functional amyloids", "Curli, HET-s, Pmel17..."),
+            ("negative", len(NEGATIVE_CONTROLS), "Non-amyloid controls", "Ubiquitin, Lysozyme, GFP..."),
+        ]
+        
+        table = Table(show_header=True, header_style="bold cyan")
+        table.add_column("Dataset")
+        table.add_column("Count", justify="right")
+        table.add_column("Description")
+        table.add_column("Examples")
+        
+        for name, count, desc, examples in datasets_info:
+            table.add_row(name, str(count), desc, examples)
+        
+        console.print(table)
+        
+        comprehensive = create_comprehensive_dataset()
+        console.print(f"\n[bold]Total:[/bold] {len(comprehensive)} sequences ({comprehensive.n_positive} positive, {comprehensive.n_negative} negative)")
+    
+    if show:
+        show = show.lower()
+        
+        if show == "canonical":
+            console.print("\n[bold]Canonical Peptides[/bold]\n")
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("Name")
+            table.add_column("Sequence")
+            table.add_column("Source")
+            table.add_column("PDB")
+            table.add_column("Class")
+            
+            for p in CANONICAL_PEPTIDES:
+                table.add_row(
+                    p.name,
+                    p.sequence,
+                    p.source_protein or "-",
+                    p.pdb_ids[0] if p.pdb_ids else "-",
+                    str(p.zipper_class) if p.zipper_class else "-",
+                )
+            console.print(table)
+            
+        elif show == "disease":
+            console.print("\n[bold]Disease Proteins[/bold]\n")
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("Name")
+            table.add_column("Length")
+            table.add_column("Disease")
+            table.add_column("APRs")
+            
+            for p in DISEASE_PROTEINS:
+                aprs = ", ".join([f"{s}-{e}" for s, e, _ in p.apr_regions[:3]])
+                if len(p.apr_regions) > 3:
+                    aprs += "..."
+                table.add_row(
+                    p.name,
+                    str(len(p.sequence)),
+                    p.disease,
+                    aprs,
+                )
+            console.print(table)
+            
+        elif show == "functional":
+            console.print("\n[bold]Functional Amyloids[/bold]\n")
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("Name")
+            table.add_column("Organism")
+            table.add_column("Function")
+            table.add_column("Fold")
+            
+            for p in FUNCTIONAL_AMYLOIDS:
+                table.add_row(
+                    p.name,
+                    p.organism,
+                    p.function[:30] + "..." if len(p.function) > 30 else p.function,
+                    p.fold_type or "-",
+                )
+            console.print(table)
+            
+        elif show == "negative":
+            console.print("\n[bold]Negative Controls[/bold]\n")
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("Name")
+            table.add_column("Length")
+            table.add_column("Fold")
+            table.add_column("Notes")
+            
+            for p in NEGATIVE_CONTROLS:
+                table.add_row(
+                    p.name,
+                    str(len(p.sequence)),
+                    p.fold_type or "-",
+                    (p.notes[:40] + "...") if p.notes and len(p.notes) > 40 else (p.notes or "-"),
+                )
+            console.print(table)
+        else:
+            console.print(f"[red]Unknown dataset: {show}[/red]")
+            console.print("Available: canonical, disease, functional, negative")
+    
+    if export:
+        from pathlib import Path
+        dataset = create_comprehensive_dataset()
+        
+        export_path = Path(export)
+        with open(export_path, "w") as f:
+            for entry in dataset.entries:
+                f.write(f">{entry.id}\n")
+                # Wrap sequence at 80 characters
+                seq = entry.sequence
+                for i in range(0, len(seq), 80):
+                    f.write(seq[i:i+80] + "\n")
+        
+        console.print(f"[green]✓[/green] Exported {len(dataset)} sequences to: {export_path}")
+
+
+@cli.command("polymorph")
+@click.argument("sequence")
+@click.option("--detailed", "-d", is_flag=True, help="Show detailed classification")
+def polymorph_cmd(sequence: str, detailed: bool):
+    """
+    Predict the structural polymorph type of an amyloidogenic sequence.
+    
+    Classifies sequences into steric zipper classes, cross-β geometries,
+    and higher-order fold types based on sequence features.
+    
+    \b
+    Examples:
+        amyloidbench polymorph GNNQQNY
+        amyloidbench polymorph KLVFFAEDVGSNKGAIIGLM --detailed
+    """
+    from ..classification import predict_polymorph
+    
+    console.print(f"\n[bold]Polymorph Classification[/bold]")
+    console.print(f"Sequence: {sequence[:50]}{'...' if len(sequence) > 50 else ''} ({len(sequence)} aa)")
+    
+    try:
+        result = predict_polymorph(sequence)
+        
+        console.print(f"\n[bold cyan]Results:[/bold cyan]")
+        console.print(f"  Fold type: {result.predicted_fold.value}")
+        console.print(f"  Geometry: {result.predicted_geometry.value}")
+        
+        if result.steric_zipper_class:
+            console.print(f"  Steric zipper class: {result.steric_zipper_class.value}")
+        
+        console.print(f"  Confidence: {result.confidence:.1%}")
+        
+        if detailed and hasattr(result, 'fold_probabilities'):
+            console.print("\n[bold]Fold Type Probabilities:[/bold]")
+            for fold, prob in sorted(result.fold_probabilities.items(), key=lambda x: -x[1]):
+                bar = "█" * int(prob * 20)
+                console.print(f"  {fold:20} {bar} {prob:.1%}")
+                
+    except Exception as e:
+        console.print(f"[red]Classification failed: {e}[/red]")
 
 
 @cli.command("info")

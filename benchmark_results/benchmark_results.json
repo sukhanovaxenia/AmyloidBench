@@ -1,0 +1,16 @@
+{
+  "database": "reference",
+  "predictors": [
+    "FallbackPredictor"
+  ],
+  "results": [
+    {
+      "predictor": "FallbackPredictor",
+      "sensitivity": 0.5454545454545454,
+      "specificity": 0.0,
+      "precision": 0.7058823529411765,
+      "f1_score": 0.6153846153846153,
+      "mcc": -0.3656362120635653
+    }
+  ]
+}
