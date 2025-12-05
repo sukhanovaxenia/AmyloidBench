@@ -1,3 +1,64 @@
+Metadata-Version: 2.4
+Name: amyloidbench
+Version: 0.1.0
+Summary: Comprehensive consensus meta-predictor and benchmark suite for protein amyloidogenicity
+Author-email: Xenia <xenia@arriam.ru>
+License: MIT
+Project-URL: Homepage, https://github.com/arriam/amyloidbench
+Project-URL: Documentation, https://amyloidbench.readthedocs.io
+Project-URL: Repository, https://github.com/arriam/amyloidbench
+Project-URL: Issues, https://github.com/arriam/amyloidbench/issues
+Keywords: amyloid,protein aggregation,bioinformatics,machine learning,consensus predictor,APR prediction
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: biopython>=1.81
+Requires-Dist: scikit-learn>=1.3.0
+Requires-Dist: xgboost>=2.0.0
+Requires-Dist: playwright>=1.40.0
+Requires-Dist: aiohttp>=3.9.0
+Requires-Dist: httpx>=0.25.0
+Requires-Dist: biotite>=0.38.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: seaborn>=0.12.0
+Requires-Dist: plotly>=5.18.0
+Requires-Dist: click>=8.1.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: tqdm>=4.66.0
+Requires-Dist: diskcache>=5.6.0
+Requires-Dist: joblib>=1.3.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.7.0; extra == "dev"
+Requires-Dist: pre-commit>=3.5.0; extra == "dev"
+Provides-Extra: structural
+Requires-Dist: torch>=2.0.0; extra == "structural"
+Requires-Dist: fair-esm>=2.0.0; extra == "structural"
+Provides-Extra: r-integration
+Requires-Dist: rpy2>=3.5.0; extra == "r-integration"
+Provides-Extra: docs
+Requires-Dist: sphinx>=7.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.3.0; extra == "docs"
+Requires-Dist: myst-parser>=2.0.0; extra == "docs"
+Dynamic: license-file
+
 # AmyloidBench
 
 **Comprehensive consensus meta-predictor and benchmark suite for protein amyloidogenicity**
@@ -233,48 +294,11 @@ html = generate_sequence_report(
 
 ## Installation
 
-### Conda (Recommended)
-
-Conda is the recommended installation method for bioinformatics workflows:
+### From source (development)
 
 ```bash
-# Create dedicated environment
-conda create -n amyloidbench python=3.11
-conda activate amyloidbench
-
-# Install from conda-forge/bioconda (once available)
-conda install -c conda-forge -c bioconda amyloidbench
-
-# Or use the environment file
-conda env create -f environment.yml
-conda activate amyloidbench
-```
-
-For local conda builds during development:
-
-```bash
-cd AmyloidBench
-conda build conda-recipe
-conda install --use-local amyloidbench
-```
-
-See [CONDA.md](CONDA.md) for detailed conda installation options and Bioconda submission guidelines.
-
-### pip Installation
-
-```bash
-# From PyPI (once published)
-pip install amyloidbench
-
-# From GitHub
-pip install git+https://github.com/sukhanovaxenia/AmyloidBench.git
-```
-
-### From Source (Development)
-
-```bash
-git clone https://github.com/sukhanovaxenia/AmyloidBench.git
-cd AmyloidBench
+git clone https://github.com/arriam/amyloidbench.git
+cd amyloidbench
 pip install -e ".[dev]"
 ```
 
@@ -291,14 +315,6 @@ pip install -e ".[r-integration]"
 
 # Web automation for remote predictors
 playwright install chromium
-```
-
-### Verify Installation
-
-```bash
-amyloidbench --version
-amyloidbench list-predictors
-amyloidbench polymorph GNNQQNY
 ```
 
 ## Quick Start

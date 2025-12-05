@@ -1,0 +1,2 @@
+[console_scripts]
+amyloidbench = amyloidbench.cli.main:cli

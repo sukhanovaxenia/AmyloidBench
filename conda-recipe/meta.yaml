@@ -1,0 +1,105 @@
+{% set name = "amyloidbench" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # For local builds during development:
+  path: ..
+  # For release builds, use:
+  # url: https://github.com/sukhanovaxenia/AmyloidBench/archive/v{{ version }}.tar.gz
+  # sha256: <sha256sum of tarball>
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - amyloidbench = amyloidbench.cli.main:cli
+  run_exports:
+    - {{ pin_subpackage(name, max_pin="x.x") }}
+
+requirements:
+  host:
+    - python >=3.10
+    - pip
+    - setuptools >=61.0
+  run:
+    - python >=3.10
+    # Core scientific stack
+    - numpy >=1.24.0
+    - pandas >=2.0.0
+    - scipy >=1.10.0
+    - biopython >=1.81
+    # Machine learning
+    - scikit-learn >=1.3.0
+    - xgboost >=2.0.0
+    # Structural biology
+    - biotite >=0.38.0
+    # Visualization
+    - matplotlib-base >=3.7.0
+    - seaborn >=0.12.0
+    # CLI and utilities
+    - click >=8.1.0
+    - rich >=13.0.0
+    - pydantic >=2.5.0
+    - tqdm >=4.66.0
+    # Caching
+    - joblib >=1.3.0
+
+test:
+  imports:
+    - amyloidbench
+    - amyloidbench.core
+    - amyloidbench.predictors
+    - amyloidbench.benchmark
+    - amyloidbench.classification
+    - amyloidbench.visualization
+  commands:
+    - amyloidbench --help
+    - amyloidbench --version
+    - amyloidbench list-predictors --help
+    - amyloidbench polymorph GNNQQNY
+  requires:
+    - pip
+
+about:
+  home: https://github.com/sukhanovaxenia/AmyloidBench
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: Comprehensive consensus meta-predictor and benchmark suite for protein amyloidogenicity
+  description: |
+    AmyloidBench provides a unified framework for predicting amyloidogenic 
+    regions in proteins by integrating multiple established prediction 
+    algorithms with proper benchmarking against curated experimental databases.
+    
+    Key features:
+    - Consensus prediction from multiple amyloidogenicity tools
+    - Per-residue aggregation propensity profiles
+    - Structural polymorph classification (steric zipper classes, cross-β geometry)
+    - Rigorous benchmarking against WALTZ-DB, Cross-Beta DB, AmyPro
+    - Statistical comparison framework (McNemar, Friedman, DeLong tests)
+    - Publication-quality visualization and HTML reports
+    
+    The package addresses the challenge of protein aggregation prediction
+    in the context of neurodegenerative diseases (Alzheimer's, Parkinson's,
+    prion diseases) and functional amyloid biology.
+  doc_url: https://github.com/sukhanovaxenia/AmyloidBench#readme
+  dev_url: https://github.com/sukhanovaxenia/AmyloidBench
+
+extra:
+  recipe-maintainers:
+    - sukhanovaxenia
+  identifiers:
+    - biotools:amyloidbench
+  keywords:
+    - amyloid
+    - protein aggregation
+    - bioinformatics
+    - APR prediction
+    - neurodegeneration
+    - prion
+    - consensus predictor
