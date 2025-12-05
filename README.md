@@ -245,7 +245,7 @@ conda activate amyloidbench
 # Install from conda-forge/bioconda (once available)
 conda install -c conda-forge -c bioconda amyloidbench
 
-# Or use the environment file
+# Or use the environment file (includes all dependencies)
 conda env create -f environment.yml
 conda activate amyloidbench
 ```
@@ -278,19 +278,46 @@ cd AmyloidBench
 pip install -e ".[dev]"
 ```
 
-### Dependencies
+### Optional Dependencies
 
-Core dependencies are installed automatically. For full functionality:
+Core dependencies are installed automatically. For extended functionality:
 
 ```bash
-# Structure-based prediction (optional)
+# Web scraping for remote predictors (WALTZ, AGGRESCAN, PASTA2, ArchCandy)
+pip install -e ".[web]"
+# This installs: selenium, webdriver-manager, aiohttp, httpx
+
+# R integration for APPNN neural network predictor
+pip install -e ".[r-integration]"
+# Also requires R with: install.packages("appnn")
+
+# Structure-based prediction (ESMFold integration)
 pip install -e ".[structural]"
 
-# R integration for original AGGRESCAN (optional)
-pip install -e ".[r-integration]"
+# All optional dependencies
+pip install -e ".[all]"
+```
 
-# Web automation for remote predictors
-playwright install chromium
+### WebDriver Setup (for web predictors)
+
+If using Selenium-based web predictors:
+
+```bash
+# Chrome (recommended)
+# 1. Install Chrome browser
+# 2. WebDriver is auto-managed by webdriver-manager
+
+# Or Firefox
+# 1. Install Firefox browser
+# 2. pip install webdriver-manager
+```
+
+### R Setup (for APPNN)
+
+```r
+# In R console
+install.packages("appnn")
+install.packages(c("ggplot2", "dplyr", "readr", "stringr", "purrr", "tibble"))
 ```
 
 ### Verify Installation

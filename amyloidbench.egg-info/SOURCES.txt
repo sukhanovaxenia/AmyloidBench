@@ -28,8 +28,11 @@ amyloidbench/features/__init__.py
 amyloidbench/features/extraction.py
 amyloidbench/predictors/__init__.py
 amyloidbench/predictors/base.py
+amyloidbench/predictors/export.py
+amyloidbench/predictors/output_models.py
 amyloidbench/predictors/local/__init__.py
 amyloidbench/predictors/local/aggrescan3d.py
+amyloidbench/predictors/local/algorithms.py
 amyloidbench/predictors/local/fallback.py
 amyloidbench/predictors/local/reimplemented/__init__.py
 amyloidbench/predictors/local/reimplemented/foldamyloid.py
@@ -37,6 +40,14 @@ amyloidbench/predictors/remote/__init__.py
 amyloidbench/predictors/remote/base.py
 amyloidbench/predictors/remote/pasta2.py
 amyloidbench/predictors/remote/waltz.py
+amyloidbench/predictors/standalone/appnn.py
+amyloidbench/predictors/standalone/path.py
+amyloidbench/predictors/web/aggrescan.py
+amyloidbench/predictors/web/archcandy.py
+amyloidbench/predictors/web/base.py
+amyloidbench/predictors/web/crossbeta.py
+amyloidbench/predictors/web/pasta2.py
+amyloidbench/predictors/web/waltz.py
 amyloidbench/visualization/__init__.py
 amyloidbench/visualization/benchmark_plots.py
 amyloidbench/visualization/plots.py

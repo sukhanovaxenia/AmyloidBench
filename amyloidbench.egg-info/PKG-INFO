@@ -294,11 +294,48 @@ html = generate_sequence_report(
 
 ## Installation
 
-### From source (development)
+### Conda (Recommended)
+
+Conda is the recommended installation method for bioinformatics workflows:
 
 ```bash
-git clone https://github.com/arriam/amyloidbench.git
-cd amyloidbench
+# Create dedicated environment
+conda create -n amyloidbench python=3.11
+conda activate amyloidbench
+
+# Install from conda-forge/bioconda (once available)
+conda install -c conda-forge -c bioconda amyloidbench
+
+# Or use the environment file
+conda env create -f environment.yml
+conda activate amyloidbench
+```
+
+For local conda builds during development:
+
+```bash
+cd AmyloidBench
+conda build conda-recipe
+conda install --use-local amyloidbench
+```
+
+See [CONDA.md](CONDA.md) for detailed conda installation options and Bioconda submission guidelines.
+
+### pip Installation
+
+```bash
+# From PyPI (once published)
+pip install amyloidbench
+
+# From GitHub
+pip install git+https://github.com/sukhanovaxenia/AmyloidBench.git
+```
+
+### From Source (Development)
+
+```bash
+git clone https://github.com/sukhanovaxenia/AmyloidBench.git
+cd AmyloidBench
 pip install -e ".[dev]"
 ```
 
@@ -315,6 +352,14 @@ pip install -e ".[r-integration]"
 
 # Web automation for remote predictors
 playwright install chromium
+```
+
+### Verify Installation
+
+```bash
+amyloidbench --version
+amyloidbench list-predictors
+amyloidbench polymorph GNNQQNY
 ```
 
 ## Quick Start
