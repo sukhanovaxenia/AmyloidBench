@@ -56,6 +56,27 @@ from .base import (
     register_predictor,
 )
 
+from .output_models import (
+    PredictorOutput,
+    ResidueScore,
+    PredictedRegion,
+    ClassificationLabel,
+    ScoreType,
+    MultiPredictorOutput,
+    normalize_scores,
+    classify_residues,
+)
+
+from .export import (
+    export_to_tsv,
+    export_regions_to_tsv,
+    export_batch_results,
+    plot_prediction_result,
+    plot_multi_predictor_comparison,
+    plot_sequence_heatmap,
+    ResultExporter,
+)
+
 __all__ = [
     # Base classes
     "BasePredictor",
@@ -73,4 +94,21 @@ __all__ = [
     "register_predictor",
     "get_predictor",
     "list_predictors",
+    # Output models
+    "PredictorOutput",
+    "ResidueScore",
+    "PredictedRegion",
+    "ClassificationLabel",
+    "ScoreType",
+    "MultiPredictorOutput",
+    "normalize_scores",
+    "classify_residues",
+    # Export functions
+    "export_to_tsv",
+    "export_regions_to_tsv",
+    "export_batch_results",
+    "plot_prediction_result",
+    "plot_multi_predictor_comparison",
+    "plot_sequence_heatmap",
+    "ResultExporter",
 ]
